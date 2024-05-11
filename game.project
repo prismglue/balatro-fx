@@ -1,8 +1,11 @@
 [project]
 title = balatro-fx
+dependencies#0 = https://github.com/britzl/defold-input/archive/refs/tags/4.6.2.zip
+dependencies#1 = https://github.com/britzl/defold-orthographic/archive/refs/tags/3.3.1.zip
 
 [bootstrap]
 main_collection = /main/main.collectionc
+render = /orthographic/render/orthographic.renderc
 
 [input]
 game_binding = /input/game.input_bindingc
