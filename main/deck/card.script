@@ -24,14 +24,22 @@ function fixed_update(self, dt)
 	-- Remove this function if not needed
 end
 
+function reached_furthest_wiggle(self, url, property_id)
+	print("wiggle reached!")
+	go.animate(url, 'euler', go.PLAYBACK_LOOP_PINGPONG, vmath.vector3(0, 0, -4), go.EASING_LINEAR, 5)
+end
+
 function did_animate_deck_top(self, url, property_id)
 	print("top deck animation complete")
-	-- swap the animation card with the actual card?
-	-- naw there's like a rotation that happens
+	-- this should let us start wiggling and stretching in place
+	-- start wiggling by animating out to the 'furthest' position then animating back to another position
+	--go.set(url, "euler", vmath.vector3(0, 0, -4))
+	go.animate(url, 'euler', go.PLAYBACK_ONCE_FORWARD, vmath.vector3(0, 0, 4), go.EASING_LINEAR, 2.5, 0, reached_furthest_wiggle)
 end
 
 function on_message(self, message_id, message, sender)
-	if message_id == hash("clicked") then
+	if message_id == hash("wiggle") then
+	elseif message_id == hash("clicked") then
 		print("Card: " .. go.get_id() .. " clicked")
 		if self.click_to_deck then
 			msg.post("/deck", message_id, message, sender)
@@ -39,7 +47,7 @@ function on_message(self, message_id, message, sender)
 			return
 		end
 		print("Card action unbound")
-	elseif message_id == hash("drop_end") and self.click_to_deck then
+	elseif message_id == hash("drag_end") and self.click_to_deck then
 		msg.post('/deck', 'clicked')
 		self.click_to_deck = false
 	end

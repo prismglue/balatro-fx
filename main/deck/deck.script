@@ -31,13 +31,15 @@ function on_message(self, message_id, message, sender)
 		print(hand_position)
 		print(hand_size)
 		local card_size = go.get(msg.url(nil, new_card_id, "body"), "size")
-		local destination = vmath.vector3(hand_position.x + (hand_size.x/2) - card_size.x, hand_position.y + (hand_size.y/2) - card_size.y, hand_position.z)
+		print(card_size)
+		local destination = vmath.vector3(hand_position.x + card_size.x, hand_position.y + (hand_size.y/2) - card_size.y/2, hand_position.z)
+		print(destination)
 		go.animate(new_card_id, "position", go.PLAYBACK_ONCE_FORWARD, destination, go.EASING_LINEAR, 0.1, 0, did_animate_deck_top)
 
 		-- Animate the topmost card moving into the position just freed
-		go.animate('/card_img', 'position', go.PLAYBACK_ONCE_FORWARD, vmath.vector3(), go.EASING_LINEAR, 0.1)
+		go.animate('/card_img', 'position', go.PLAYBACK_ONCE_FORWARD, vmath.vector3(), go.EASING_LINEAR, 0.05)
 		-- Animate the lowest card moving into the position just freed
-		go.animate('/card_img1', 'position', go.PLAYBACK_ONCE_FORWARD, self.card_pos, go.EASING_LINEAR, 0.1, 0, on_deck_anim_done)
+		go.animate('/card_img1', 'position', go.PLAYBACK_ONCE_FORWARD, self.card_pos, go.EASING_LINEAR, 0.05, 0, on_deck_anim_done)
 		-- spawn the next hand card when the cards stop moving
 	end
 end
