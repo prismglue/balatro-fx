@@ -25,9 +25,25 @@ end
 
 function on_message(self, message_id, message, sender)
 	if message_id == hash("clicked") then
+		-- inform the card controller that this card was clicked?
+		-- meh, the type of card dictates what happens when it's clicked
+		print("Card: " .. go.get_id() .. " clicked")
+		if go.get_id() == hash("/deck_top") then
+			print("Start card animation (if not running)")
+			-- Move topmost card to hand_area
+			local hand_position = go.get_position("/hand_area")
+			local hand_size = go.get("/hand_area#sprite", "size")
+			print(hand_position)
+			print(hand_size)
+			local card_size = go.get("#body", "size")
+			local destination = vmath.vector3(hand_position.x + (hand_size.x/2) - card_size.x, hand_position.y + (hand_size.y/2) - card_size.y, hand_position.z)
+			go.animate(".", "position", go.PLAYBACK_ONCE_FORWARD, destination, go.EASING_LINEAR, 0.1)
+			msg.post("/deck_anim#deck", "sit_on_my_deck")
+		else
+			print("Card action unbound")
+		end
 		-- animate travelling to the center of the card body
 		-- animate the cards going up
-		print("animate cards")
 		-- reset cards to original positions at end of animation?z
 	end
 end
