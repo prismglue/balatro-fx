@@ -3,6 +3,7 @@ function init(self)
 	self.card_pos = go.get_position("/card_img")
 	self.card_pos1 = go.get_position("/card_img1")
 	self.next_card = factory.create('#factory', go.get_position('#collider'))
+	self.card_dealt = 0
 end
 
 function update(self, dt)
@@ -15,11 +16,13 @@ end
 function on_message(self, message_id, message, sender)
 	--print(message_id)
 	if message_id == hash("clicked") then
-		if self.next_card == nil then
-			print("Can't spawn a new card, still playing the deck animation, sorry")
+		if self.card_dealt >= 8 then
+			print("Can't deal more than 8 cards in Balatro")
+			return
 		end
 		local new_card_id = self.next_card
 		self.next_card = nil
+		self.card_dealt = self.card_dealt + 1
 		-- reset previous animation states
 		go.set_position(self.card_pos, "/card_img")
 		go.set_position(self.card_pos1, "/card_img1")
@@ -27,12 +30,9 @@ function on_message(self, message_id, message, sender)
 		print("Start card animation (if not running)")
 		-- Move topmost card to hand_area
 		local hand_position = go.get_position("/hand_area")
-		local hand_size = go.get("/hand_area#sprite", "size")
+		-- hand_position.y will have to change based on the number of cards dealt, and cards will have to shuffle to new final positions
+		local destination = vmath.vector3(hand_position.x, hand_position.y, self.card_dealt) -- slowly make new cards go higher
 		print(hand_position)
-		print(hand_size)
-		local card_size = go.get(msg.url(nil, new_card_id, "body"), "size")
-		print(card_size)
-		local destination = vmath.vector3(hand_position.x, hand_position.y, hand_position.z)
 		print(destination)
 		go.animate(new_card_id, "position", go.PLAYBACK_ONCE_FORWARD, destination, go.EASING_LINEAR, 0.1, 0, did_animate_deck_top)
 
