@@ -32,7 +32,7 @@ function on_message(self, message_id, message, sender)
 		print(hand_size)
 		local card_size = go.get(msg.url(nil, new_card_id, "body"), "size")
 		print(card_size)
-		local destination = vmath.vector3(hand_position.x + card_size.x, hand_position.y + (hand_size.y/2) - card_size.y/2, hand_position.z)
+		local destination = vmath.vector3(hand_position.x, hand_position.y, hand_position.z)
 		print(destination)
 		go.animate(new_card_id, "position", go.PLAYBACK_ONCE_FORWARD, destination, go.EASING_LINEAR, 0.1, 0, did_animate_deck_top)
 

@@ -44,7 +44,7 @@ embedded_components {
   "mass: 1.0\n"
   "friction: 1.0\n"
   "restitution: 0.0\n"
-  "group: \"default\"\n"
+  "group: \"card\"\n"
   "mask: \"default\"\n"
   "embedded_collision_shape {\n"
   "  shapes {\n"
