@@ -1,26 +1,45 @@
 function init(self)
+	self.deck_pos = go.get_position(".")
+	self.card_pos = go.get_position("/card_img")
+	self.card_pos1 = go.get_position("/card_img1")
+	self.next_card = factory.create('#factory', go.get_position('#collider'))
 end
 
 function update(self, dt)
 end
 
-function on_message(self, message_id, message, sender)
-	print("Deck animator message recevied: " .. message_id)
-	if message_id == hash("sit_on_my_deck") then
-		-- Animate the topmost card moving into the position just freed
-		local new_position = go.get_position('/card_img')
-		new_position.x = new_position.x - 5
-		new_position.y = new_position.y + 5
-		go.animate('/card_img', 'position', go.PLAYBACK_ONCE_FORWARD, new_position, go.EASING_LINEAR, 0.1)
-		-- Animate the lowest card moving into the position just freed
-		new_position = go.get_position('/card_img1')
-		new_position.x = new_position.x - 5
-		new_position.y = new_position.y + 5
-		go.animate('/card_img1', 'position', go.PLAYBACK_ONCE_FORWARD, new_position, go.EASING_LINEAR, 0.1)
-	end
+function on_deck_anim_done(self)
+	self.next_card = factory.create('#factory', go.get_position('#collider'))
 end
 
-function on_input(self, action_id, action)
+function on_message(self, message_id, message, sender)
+	--print(message_id)
+	if message_id == hash("clicked") then
+		if self.next_card == nil then
+			print("Can't spawn a new card, still playing the deck animation, sorry")
+		end
+		local new_card_id = self.next_card
+		self.next_card = nil
+		-- reset previous animation states
+		go.set_position(self.card_pos, "/card_img")
+		go.set_position(self.card_pos1, "/card_img1")
+		-- move it to the hand area
+		print("Start card animation (if not running)")
+		-- Move topmost card to hand_area
+		local hand_position = go.get_position("/hand_area")
+		local hand_size = go.get("/hand_area#sprite", "size")
+		print(hand_position)
+		print(hand_size)
+		local card_size = go.get(msg.url(nil, new_card_id, "body"), "size")
+		local destination = vmath.vector3(hand_position.x + (hand_size.x/2) - card_size.x, hand_position.y + (hand_size.y/2) - card_size.y, hand_position.z)
+		go.animate(new_card_id, "position", go.PLAYBACK_ONCE_FORWARD, destination, go.EASING_LINEAR, 0.1, 0, did_animate_deck_top)
+
+		-- Animate the topmost card moving into the position just freed
+		go.animate('/card_img', 'position', go.PLAYBACK_ONCE_FORWARD, vmath.vector3(), go.EASING_LINEAR, 0.1)
+		-- Animate the lowest card moving into the position just freed
+		go.animate('/card_img1', 'position', go.PLAYBACK_ONCE_FORWARD, self.card_pos, go.EASING_LINEAR, 0.1, 0, on_deck_anim_done)
+		-- spawn the next hand card when the cards stop moving
+	end
 end
 
 function on_reload(self)

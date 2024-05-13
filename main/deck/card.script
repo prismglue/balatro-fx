@@ -1,5 +1,6 @@
 function init(self)
 	print("I'm a new card")
+	self.click_to_deck = true
 end
 
 function final(self)
@@ -23,28 +24,24 @@ function fixed_update(self, dt)
 	-- Remove this function if not needed
 end
 
+function did_animate_deck_top(self, url, property_id)
+	print("top deck animation complete")
+	-- swap the animation card with the actual card?
+	-- naw there's like a rotation that happens
+end
+
 function on_message(self, message_id, message, sender)
 	if message_id == hash("clicked") then
-		-- inform the card controller that this card was clicked?
-		-- meh, the type of card dictates what happens when it's clicked
 		print("Card: " .. go.get_id() .. " clicked")
-		if go.get_id() == hash("/deck_top") then
-			print("Start card animation (if not running)")
-			-- Move topmost card to hand_area
-			local hand_position = go.get_position("/hand_area")
-			local hand_size = go.get("/hand_area#sprite", "size")
-			print(hand_position)
-			print(hand_size)
-			local card_size = go.get("#body", "size")
-			local destination = vmath.vector3(hand_position.x + (hand_size.x/2) - card_size.x, hand_position.y + (hand_size.y/2) - card_size.y, hand_position.z)
-			go.animate(".", "position", go.PLAYBACK_ONCE_FORWARD, destination, go.EASING_LINEAR, 0.1)
-			msg.post("/deck_anim#deck", "sit_on_my_deck")
-		else
-			print("Card action unbound")
+		if self.click_to_deck then
+			msg.post("/deck", message_id, message, sender)
+			self.click_to_deck = false
+			return
 		end
-		-- animate travelling to the center of the card body
-		-- animate the cards going up
-		-- reset cards to original positions at end of animation?z
+		print("Card action unbound")
+	elseif message_id == hash("drop_end") and self.click_to_deck then
+		msg.post('/deck', 'clicked')
+		self.click_to_deck = false
 	end
 end
 
