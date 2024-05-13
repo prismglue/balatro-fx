@@ -48,5 +48,4 @@ gravity_y = 0.0
 scale = 0.01
 gravity_z = 0.0
 gravity_x = 0.0
-use_fixed_timestep = 1
 
