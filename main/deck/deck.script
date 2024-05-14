@@ -36,18 +36,12 @@ function on_message(self, message_id, message, sender)
 		-- reset previous animation states
 		go.set_position(self.card_pos, "/card_img")
 		go.set_position(self.card_pos1, "/card_img1")
-		msg.post('/hand_zone', 'card_announce', { url = new_card_id } )
-	elseif message_id == hash("zone_ready_for_card") then
-		-- move it to the hand area
-		print("Start card animation (if not running)")
-		-- Move topmost card to hand_zone
-		local hand_position = go.get_position("/hand_zone")
-		-- hand_position.y will have to change based on the number of cards dealt, and cards will have to shuffle to new final positions
-		local destination = vmath.vector3(message.x, hand_position.y, self.card_dealt) -- slowly make new cards go higher
-		print(hand_position)
-		print(destination)
-		print(message)
-		go.animate(message.url, "position", go.PLAYBACK_ONCE_FORWARD, destination, go.EASING_LINEAR, 0.1, 0, did_animate_deck_top)
+		msg.post('/hand_zone', 'card_announce', { url = new_card_id } ) -- wait for zone_offer in response
+
+	elseif message_id == hash("zone_offer") then
+		message.target.z = self.card_dealt
+		pprint(message)
+		msg.post(message.url, 'fling', { target = message.target })
 
 		-- Animate the topmost card moving into the position just freed
 		go.animate('/card_img', 'position', go.PLAYBACK_ONCE_FORWARD, vmath.vector3(), go.EASING_LINEAR, 0.05)

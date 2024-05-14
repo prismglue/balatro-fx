@@ -48,13 +48,14 @@ function on_message(self, message_id, message, sender)
 		local space_per_card = (x_end-x_start) / total_cards
 
 		local total_bounds = 0 -- this shrinks... relative to hand size... i think i'm going to call variable sizes a 'stretch goal' (i.e. i'm too lazy)
-		local new_card_pos = vmath.vector3((space_per_card * self.card_count) + self.half_card, 0, go.get_position().z)
+		local pos = go.get_position()
+		local new_card_pos = vmath.vector3((space_per_card * self.card_count) + self.half_card, pos.y, pos.z)
 		
 		print("Bound start: " .. x_start .. " / " .. x_end .. " total: " .. total_cards .. " space per card " .. space_per_card .. " location: " .. new_card_pos)
 		self.card_count = self.card_count + 1
 		self.cards[self.card_count] = { url = message.url }
 		pprint(self.cards)
-		msg.post(sender, "zone_ready_for_card", { url = message.url, x = new_card_pos.x, y = new_card_pos.y })
+		msg.post(sender, "zone_offer", { url = message.url, target = new_card_pos })
 	elseif message_id == hash('card_select') then
 		for i, card in next, self.cards do
 			if card.url == sender then
@@ -64,6 +65,10 @@ function on_message(self, message_id, message, sender)
 	elseif message_id == hash('discard') then
 		local selected = get_selected_cards(self)
 		pprint(selected)
+		-- throw these cards away index by index with a delay offset by the iteration... anyway
+		for i, card in next, selected do
+			msg.post(card.url, 'discard')
+		end
 	elseif message_id == hash('play') then
 		local selected = get_selected_cards(self)
 		pprint(selected)
