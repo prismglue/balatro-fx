@@ -1,3 +1,5 @@
+local CARD_LEAVE_INTERVAL = 0.07
+
 function init(self)
 	-- get the total size of the zone
 	self.zone_size = go.get('#sprite', 'size')
@@ -25,14 +27,51 @@ local function get_selected_cards(self)
 	local selected = {}
 	local mypos = go.get_position()
 	for i, card in next, self.cards do
-		pos = go.get_position(card.url)
+		local pos = go.get_position(card.url)
 		-- don't bother with 'card_select' messages, just find out if it's away from the baseline, heh
 		if card.selected or mypos.y ~= pos.y then
 			selectcount = selectcount + 1
 			selected[selectcount] = card
 		end
 	end
-	return selected
+	return selected, selectcount
+end
+
+local function get_card_space(self, size)
+	local total_cards = math.max(self.hand_size, self.card_count)
+	return size / total_cards, total_cards
+end
+
+-- probably needs refactoring for animate_join or an aggregate animate_change... ah well, get this working first
+local function animate_remove(self, removed)
+	print("Removing cards...")
+	local removed_urls = {}
+	for i, remove in next, removed do
+		removed_urls[remove.url] = remove
+	end
+	-- it's actually relatively simple
+	-- for each card, move all the cards towards the empty spot in a leftofremove/rightofremove fashion
+	local x_start = go.get_position().x - (self.zone_size.x/2)
+	local x_end = go.get_position().x + (self.zone_size.x/2)
+	for i, remove in next, removed do
+		self.card_count = self.card_count - 1
+		local space_per_card = get_card_space(self, x_end-x_start)
+		local reali = 0
+		for ci, card in next, self.cards do
+			if removed_urls[card.url] == nil then
+				local delay = CARD_LEAVE_INTERVAL*reali
+				-- card's current position is irrelevant, tell it where it's going
+				local x = (space_per_card * reali) + self.half_card
+				local orig = go.get_position(card.url).x
+				reali = reali + 1
+				print('animating ' .. card.url .. ' to a new x position?' .. x)
+				go.animate(card.url, 'position.x', go.PLAYBACK_ONCE_FORWARD, x, go.EASING_LINEAR, CARD_LEAVE_INTERVAL, delay)
+			elseif card.url == remove.url then
+				table.remove(self.cards, ci)
+			end
+		end
+		msg.post(remove.url, 'fling', { target = self.discard_pos, delay = 0.07*i})
+	end
 end
 
 function on_message(self, message_id, message, sender)
@@ -44,8 +83,7 @@ function on_message(self, message_id, message, sender)
 		--message.suit  0 (spade), 1 (heart), 2 (diamond), 3 (club)
 		local x_start = go.get_position().x - (self.zone_size.x/2)
 		local x_end = go.get_position().x + (self.zone_size.x/2)
-		local total_cards = math.max(self.hand_size, self.card_count)
-		local space_per_card = (x_end-x_start) / total_cards
+		local space_per_card, total_cards = get_card_space(self, (x_end-x_start))
 
 		local total_bounds = 0 -- this shrinks... relative to hand size... i think i'm going to call variable sizes a 'stretch goal' (i.e. i'm too lazy)
 		local pos = go.get_position()
@@ -63,17 +101,33 @@ function on_message(self, message_id, message, sender)
 			end
 		end
 	elseif message_id == hash('discard') then
-		local selected = get_selected_cards(self)
+		local selected, selected_count = get_selected_cards(self)
 		pprint(selected)
 		-- throw these cards away index by index with a delay offset by the iteration... anyway
-		for i, card in next, selected do
-			msg.post(card.url, 'discard')
-		end
+		self.discard_pos = go.get_position('/discard_pile')
+		-- shuffle cards together
+		animate_remove(self, selected)
 	elseif message_id == hash('play') then
-		local selected = get_selected_cards(self)
+		local selected, selected_count = get_selected_cards(self)
 		pprint(selected)
+		-- announce these to the play_zone
+		for i, card in next, selected do
+			msg.post('/hand_zone', "zone_offer", {url = card.url})
+		end
+		-- shuffle cards together
+		animate_remove(self, selected)
 	end
 end
+
+-- mouseover is what triggers shuffles - if you mouse over another card while dragging a primary card, trigger the shift right
+-- mouseover doesn't work, i move some of the items too high
+-- i have two options
+-- create a collisionobject for each card slot
+-- monitor drag events for card slot overlap
+-- seems like drag events would be cheaper, we're already getting them every frame
+
+-- drag event timestamp: https://youtu.be/bFOfsbmB2O4?t=1275
+
 
 -- in balatro, cards get spaced based on the expected hand size. so when you discard cards, they don't change their relative distance...
 -- unless you have been over-dealt, then when your card leaves, the overdealt hand shrinks
@@ -94,4 +148,8 @@ end
 -- s the card lands in it's spot, it shoves the other cards left and right
 
 -- https://www.youtube.com/watch?v=bFOfsbmB2O4 this video has a fat hand and a few hours of gameplay to scrub through for details
+
+-- ah we need a slot system
+-- slots should exist based on the number of dealt cards
+-- how do you drag between each slot? triggers?
 

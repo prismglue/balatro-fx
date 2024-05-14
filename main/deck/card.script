@@ -26,12 +26,18 @@ end
 
 function on_message(self, message_id, message, sender)
 	if message_id == hash("wiggle") then
+	elseif message_id == hash('cursor_over') then
+		print(go.get_id() .. ": " .. message_id)
+		-- this is relevant to zones that know someone is dragging a card
 	elseif message_id == hash('dealt') then
 		self.click_to_deck = false
 	elseif message_id == hash('fling') then
 		print("fling to destination: ")
 		pprint(message)
-		go.animate('.', "position", go.PLAYBACK_ONCE_FORWARD, message.target, go.EASING_LINEAR, 0.1, 0, did_animate_deck_top)
+		if message.delay == nil then
+			message.delay = 0
+		end
+		go.animate('.', "position", go.PLAYBACK_ONCE_FORWARD, message.target, go.EASING_LINEAR, 0.1, message.delay, did_animate_deck_top)
 	elseif message_id == hash("clicked") then
 		print("Card: " .. go.get_id() .. " clicked")
 		if self.click_to_deck then
@@ -55,8 +61,12 @@ function on_message(self, message_id, message, sender)
 			go.animate('.', "position.y", go.PLAYBACK_ONCE_FORWARD, (pos.y - SELECTED_OFFSET), go.EASING_LINEAR, 0.05)
 		end
 		print("Card action unbound")
-	elseif message_id == hash("drag_end") and self.click_to_deck then
-		msg.post('/deck', 'clicked')
-		self.click_to_deck = false
+	elseif message_id == hash("drag_end") then
+		if self.click_to_deck then
+			msg.post('/deck', 'clicked')
+			self.click_to_deck = false
+		end
 	end
 end
+
+-- linked list?
