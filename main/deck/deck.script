@@ -28,6 +28,7 @@ function on_message(self, message_id, message, sender)
 			-- disable next card collider too
 			return
 		end
+		msg.post('#collider', 'disable') -- don't let 
 		-- this should trigger a 'hand remaining' deal instead of a 'single card deal' to match Balatro's behaviour
 		local new_card_id = self.next_card
 		self.next_card = nil

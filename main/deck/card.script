@@ -1,9 +1,12 @@
+local SELECTED_OFFSET = 50
+
 function init(self)
 	print("I'm a new card")
 	self.click_to_deck = true
+	self.selected = false
 end
 
-function reached_furthest_wiggle(self, url, property_id)
+local function reached_furthest_wiggle(self, url, property_id)
 	print("wiggle reached!")
 	go.animate(url, 'euler', go.PLAYBACK_LOOP_PINGPONG, vmath.vector3(0, 0, -4), go.EASING_LINEAR, 5)
 end
@@ -13,17 +16,35 @@ function did_animate_deck_top(self, url, property_id)
 	-- this should let us start wiggling and stretching in place
 	-- start wiggling by nicely animating out to the 'furthest' position so we can use LOOP_PINGPONG to do the rest
 	--go.set(url, "euler", vmath.vector3(0, 0, -4))
+	msg.post(url, 'dealt')
 	go.animate(url, 'euler', go.PLAYBACK_ONCE_FORWARD, vmath.vector3(0, 0, 4), go.EASING_LINEAR, 2.5, 0, reached_furthest_wiggle)
 end
 
 function on_message(self, message_id, message, sender)
 	if message_id == hash("wiggle") then
+	elseif message_id == hash('dealt') then
+		self.click_to_deck = false
 	elseif message_id == hash("clicked") then
 		print("Card: " .. go.get_id() .. " clicked")
 		if self.click_to_deck then
 			msg.post("/deck", message_id, message, sender)
 			self.click_to_deck = false
 			return
+		elseif self.selected == false then
+			print("selecting card")
+			self.selected = true
+			local pos = go.get_position()
+			self.z = pos.z
+			pos.z = 9
+			go.set_position(pos)
+			go.animate('.', "position.y", go.PLAYBACK_ONCE_FORWARD, (pos.y + SELECTED_OFFSET), go.EASING_LINEAR, 0.05)
+		else
+			print("deselecting card")
+			local pos = go.get_position()
+			pos.z = self.z
+			go.set_position(pos)
+			self.selected = false
+			go.animate('.', "position.y", go.PLAYBACK_ONCE_FORWARD, (pos.y - SELECTED_OFFSET), go.EASING_LINEAR, 0.05)
 		end
 		print("Card action unbound")
 	elseif message_id == hash("drag_end") and self.click_to_deck then
