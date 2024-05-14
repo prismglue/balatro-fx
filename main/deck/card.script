@@ -1,6 +1,10 @@
-local SELECTED_OFFSET = 50
+local SELECTED_OFFSET = 0
 
 function init(self)
+	if SELECTED_OFFSET == 0 then
+		SELECTED_OFFSET = go.get("#body", "size").y / 2
+		print(SELECTED_OFFSET)
+	end
 	print("I'm a new card")
 	self.click_to_deck = true
 	self.selected = false

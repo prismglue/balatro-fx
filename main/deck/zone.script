@@ -36,8 +36,12 @@ function on_message(self, message_id, message, sender)
 		local new_card_pos = vmath.vector3((space_per_card * self.card_count) + self.half_card, 0, go.get_position().z)
 		
 		print("Bound start: " .. x_start .. " / " .. x_end .. " total: " .. total_cards .. " space per card " .. space_per_card .. " location: " .. new_card_pos)
+		self.cards[self.card_count] = message.url
 		self.card_count = self.card_count + 1
+		pprint(self.cards)
 		msg.post(sender, "zone_ready_for_card", { url = message.url, x = new_card_pos.x, y = new_card_pos.y })
+	elseif message_id == hash('zone_switch') then
+		print("This card is switching zones")
 	end
 end
 
