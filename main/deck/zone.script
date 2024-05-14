@@ -1,4 +1,4 @@
-local CARD_LEAVE_INTERVAL = 0.07
+local CARD_LEAVE_INTERVAL = 0.907
 
 function init(self)
 	-- get the total size of the zone
@@ -47,7 +47,6 @@ local function animate_remove(self, removed)
 	print("Removing cards...")
 	local removed_urls = {}
 	for i, remove in next, removed do
-		removed_urls[remove.url] = remove
 	end
 	-- it's actually relatively simple
 	-- for each card, move all the cards towards the empty spot in a leftofremove/rightofremove fashion
@@ -57,20 +56,25 @@ local function animate_remove(self, removed)
 		self.card_count = self.card_count - 1
 		local space_per_card = get_card_space(self, x_end-x_start)
 		local reali = 0
+		removed_urls[remove.url] = remove
+		local remove_index = 0
 		for ci, card in next, self.cards do
 			if removed_urls[card.url] == nil then
-				local delay = CARD_LEAVE_INTERVAL*reali
+				local delay = CARD_LEAVE_INTERVAL*(i-1)
 				-- card's current position is irrelevant, tell it where it's going
-				local x = (space_per_card * reali) + self.half_card
+				local emptyslots = self.hand_size-self.card_count
+				local x = (space_per_card * reali) + self.half_card + (emptyslots*(space_per_card/2))
 				local orig = go.get_position(card.url).x
+				-- x is offset by card space for every missing card
 				reali = reali + 1
-				print('animating ' .. card.url .. ' to a new x position?' .. x)
+				print('animating ' .. card.url .. ' to a new x position? ' .. x .. " esd: " .. emptyslots)
 				go.animate(card.url, 'position.x', go.PLAYBACK_ONCE_FORWARD, x, go.EASING_LINEAR, CARD_LEAVE_INTERVAL, delay)
 			elseif card.url == remove.url then
-				table.remove(self.cards, ci)
+				remove_index = ci
 			end
 		end
-		msg.post(remove.url, 'fling', { target = self.discard_pos, delay = 0.07*i})
+		print("removed " .. table.remove(self.cards, remove_index).url)
+		msg.post(remove.url, 'fling', { target = self.discard_pos, delay = CARD_LEAVE_INTERVAL*i-1})
 	end
 end
 
