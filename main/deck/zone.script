@@ -20,6 +20,21 @@ end
 function fixed_update(self, dt)
 end
 
+local function get_selected_cards(self)
+	local selectcount = 0
+	local selected = {}
+	local mypos = go.get_position()
+	for i, card in next, self.cards do
+		pos = go.get_position(card.url)
+		-- don't bother with 'card_select' messages, just find out if it's away from the baseline, heh
+		if card.selected or mypos.y ~= pos.y then
+			selectcount = selectcount + 1
+			selected[selectcount] = card
+		end
+	end
+	return selected
+end
+
 function on_message(self, message_id, message, sender)
 	-- I need to know when I'm about to receive a card, and what suit it is, so I can pick a slot for it and reply
 	if message_id == hash("card_announce") then
@@ -32,45 +47,46 @@ function on_message(self, message_id, message, sender)
 		local total_cards = math.max(self.hand_size, self.card_count)
 		local space_per_card = (x_end-x_start) / total_cards
 
-		local total_bounds = 0 -- this shrinks... relative to hand size... hmm i guess it's scaled by the 
+		local total_bounds = 0 -- this shrinks... relative to hand size... i think i'm going to call variable sizes a 'stretch goal' (i.e. i'm too lazy)
 		local new_card_pos = vmath.vector3((space_per_card * self.card_count) + self.half_card, 0, go.get_position().z)
 		
 		print("Bound start: " .. x_start .. " / " .. x_end .. " total: " .. total_cards .. " space per card " .. space_per_card .. " location: " .. new_card_pos)
-		self.cards[self.card_count] = message.url
 		self.card_count = self.card_count + 1
+		self.cards[self.card_count] = { url = message.url }
 		pprint(self.cards)
 		msg.post(sender, "zone_ready_for_card", { url = message.url, x = new_card_pos.x, y = new_card_pos.y })
-	elseif message_id == hash('zone_switch') then
-		print("This card is switching zones")
+	elseif message_id == hash('card_select') then
+		for i, card in next, self.cards do
+			if card.url == sender then
+				card.selected = not card.selected
+			end
+		end
+	elseif message_id == hash('discard') then
+		local selected = get_selected_cards(self)
+		pprint(selected)
+	elseif message_id == hash('play') then
+		local selected = get_selected_cards(self)
+		pprint(selected)
 	end
 end
 
--- seems like when you add the cards, you reduce the percentage of space available for each card
--- how do you compute that?
--- okay we have space from 0-100
--- card starts at 50 because it's half of all available space, that's how the current computation works
--- now you have two cards, where do they go?
--- in balatro, they get spaced based on the expected hand size. so when you discard cards, they don't change their relative distance...
--- unless you have been over-dealt, then when your card leaves, the overdealt hand shri	nks
+-- in balatro, cards get spaced based on the expected hand size. so when you discard cards, they don't change their relative distance...
+-- unless you have been over-dealt, then when your card leaves, the overdealt hand shrinks
 
--- the tilt of the card is also relative to it's position - 5 in a 9 card hand faces straight up
+-- the tilt of the card is relative to it's position - 5 in a 9 card hand faces straight up
 
--- okay i think i almost understand this. you must be in some cohort that can be divided an infinite number of times
--- it's actually really simple!
--- 8 is your card total, so if you are card 6, you know you're 6 units of the hand_size divided by your card total
--- i guess the final trouble is the 'float around the centre' behaviour. units are sorta assigned from the middle outwards.
+-- i guess the final trouble is the 'float around the centre' behaviour. cards float towards the centre
 -- ok so you deal 4 / 8 cards, you only have 4 left. they push each other together, hmm...
 
 -- you could shrink the total available board area around the centre point?
 -- that way, everything is still positioned relative to the centre, but the maximum bounds are redefined
--- ah yes. this makes a lot of sense. it's a card-sized-hole that grows based on the total number of cards. then you divide across the card sized hole.
+-- like a hand-sized-hole that grows based on the total number of cards. then you divide the consumed space across the card sized hole.
 
--- cards are 'served' in order but they place themselves in rank/suit order
+-- cards are 'served' in order they are drawn but they place themselves in rank/suit order
 -- so 5 can be dealt then 2, 5 will go left, 2 will go right
+-- knowing all card positions in advance would help such an animation since cards know their final position
+-- i don't think this happens though, i think it acts like the single card join animation
+-- s the card lands in it's spot, it shoves the other cards left and right
 
 -- https://www.youtube.com/watch?v=bFOfsbmB2O4 this video has a fat hand and a few hours of gameplay to scrub through for details
 
-
--- you know, the only way to play the deal animation is to know all of the card positions in advance
--- as they are dealt, they already know their final position - there is no re-shuffling
---  they aren't sorted! there are tonnes of 'card-join' events
