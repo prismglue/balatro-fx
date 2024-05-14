@@ -20,21 +20,25 @@ function on_message(self, message_id, message, sender)
 			print("Can't deal more than 8 cards in Balatro")
 			return
 		end
+		-- this should trigger a 'hand remaining' deal instead of a 'single card deal' to match Balatro's behaviour
 		local new_card_id = self.next_card
 		self.next_card = nil
 		self.card_dealt = self.card_dealt + 1
 		-- reset previous animation states
 		go.set_position(self.card_pos, "/card_img")
 		go.set_position(self.card_pos1, "/card_img1")
+		msg.post('/hand_zone', 'card_announce', { url = new_card_id } )
+	elseif message_id == hash("zone_ready_for_card") then
 		-- move it to the hand area
 		print("Start card animation (if not running)")
-		-- Move topmost card to hand_area
-		local hand_position = go.get_position("/hand_area")
+		-- Move topmost card to hand_zone
+		local hand_position = go.get_position("/hand_zone")
 		-- hand_position.y will have to change based on the number of cards dealt, and cards will have to shuffle to new final positions
-		local destination = vmath.vector3(hand_position.x, hand_position.y, self.card_dealt) -- slowly make new cards go higher
+		local destination = vmath.vector3(message.x, hand_position.y, self.card_dealt) -- slowly make new cards go higher
 		print(hand_position)
 		print(destination)
-		go.animate(new_card_id, "position", go.PLAYBACK_ONCE_FORWARD, destination, go.EASING_LINEAR, 0.1, 0, did_animate_deck_top)
+		print(message)
+		go.animate(message.url, "position", go.PLAYBACK_ONCE_FORWARD, destination, go.EASING_LINEAR, 0.1, 0, did_animate_deck_top)
 
 		-- Animate the topmost card moving into the position just freed
 		go.animate('/card_img', 'position', go.PLAYBACK_ONCE_FORWARD, vmath.vector3(), go.EASING_LINEAR, 0.05)
@@ -51,10 +55,6 @@ function on_reload(self)
 end
 
 function animation_descriptions(self)
-	-- card-select
-	-- on-click-and-hold - card hovers above others cards, shadow is obvious
-	-- card-selected - moves away from the player on the X/Y axis (it's like there's a center point far down offscreen that the cards move away from)
-	
 	-- deal-card-to-zone - both the hand and the play area act the same, they should take ownership over the cards they are dealt so it's possible to announce their free slots
 	-- ^ zones exist in hands and play areas, card_leave_hand and card_join_hand both need to be triggered on card play
 	-- ^ card_join_zone - all cards tilt away from new card and move
@@ -65,6 +65,10 @@ function animation_descriptions(self)
 
 	-- card-raise - raise the card up, maybe scale it up, shrink the shadow card underneath
 	-- card-activate - thrust towards you on the z axis, rotated on the x axis? whatever the left right one is, 'settle' bounce animation on the return to a negative axis
+
+	-- card-select
+	-- on-click-and-hold - card hovers above others cards, shadow is obvious
+	-- card-selected - moves away from the player on the X/Y axis (it's like there's a center point far down offscreen that the cards move away from)
 	
 	-- card flipping animations are probably worth a shot as a stretch goal
 end

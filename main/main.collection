@@ -103,7 +103,7 @@ embedded_instances {
   children: "bg"
   children: "deck"
   children: "deck_anim"
-  children: "hand_area"
+  children: "hand_zone"
   data: ""
   position {
     x: 0.0
@@ -330,8 +330,25 @@ embedded_instances {
   }
 }
 embedded_instances {
-  id: "hand_area"
-  data: "embedded_components {\n"
+  id: "hand_zone"
+  data: "components {\n"
+  "  id: \"zone\"\n"
+  "  component: \"/main/deck/zone.script\"\n"
+  "  position {\n"
+  "    x: 0.0\n"
+  "    y: 0.0\n"
+  "    z: 0.0\n"
+  "  }\n"
+  "  rotation {\n"
+  "    x: 0.0\n"
+  "    y: 0.0\n"
+  "    z: 0.0\n"
+  "    w: 1.0\n"
+  "  }\n"
+  "  property_decls {\n"
+  "  }\n"
+  "}\n"
+  "embedded_components {\n"
   "  id: \"sprite\"\n"
   "  type: \"sprite\"\n"
   "  data: \"default_animation: \\\"grey_play\\\"\\n"
