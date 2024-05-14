@@ -11,6 +11,13 @@ end
 
 function on_deck_anim_done(self)
 	self.next_card = factory.create('#factory', go.get_position('#collider'))
+	if self.card_dealt >= 8 then
+		-- disable next card collider
+		msg.post(msg.url(nil, self.next_card, 'collider'), 'disable')
+		return
+	else
+		msg.post('.', 'clicked') -- causes the drop or click event to deal the rest of the cards
+	end
 end
 
 function on_message(self, message_id, message, sender)
@@ -18,6 +25,7 @@ function on_message(self, message_id, message, sender)
 	if message_id == hash("clicked") then
 		if self.card_dealt >= 8 then
 			print("Can't deal more than 8 cards in Balatro")
+			-- disable next card collider too
 			return
 		end
 		-- this should trigger a 'hand remaining' deal instead of a 'single card deal' to match Balatro's behaviour
