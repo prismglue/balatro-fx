@@ -1,3 +1,5 @@
+go.property("hand_size", 8) -- make cards 'larger' so they space out better
+
 local CARD_LEAVE_INTERVAL = 0.07
 
 function init(self)
@@ -10,7 +12,7 @@ function init(self)
 	self.half_card = self.card_size.x/2
 	print("CardSize: " .. self.card_size)
 
-	self.hand_size = 8 -- increases and decreases on gameplay events
+	--self.hand_size = 8 -- increases and decreases on gameplay events
 	self.card_count = 0 -- lua doesn't know how many items are in a table and doesn't offer a builtin for counting
 	-- you can be overdealt and your hand can be larger than hand_size, so it's math.max between them
 	self.cards = {}

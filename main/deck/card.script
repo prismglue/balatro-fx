@@ -77,8 +77,6 @@ function on_message(self, message_id, message, sender)
 			go.animate('.', "position.y", go.PLAYBACK_ONCE_FORWARD, (pos.y - SELECTED_OFFSET), go.EASING_LINEAR, 0.05)
 		end
 		print("Card action unbound")
-	elseif message_id == hash('cursor_over') then
-		--self.ylock = true
 	elseif message_id == hash("drag_end") then
 		if self.click_to_deck then
 			msg.post('/deck', 'clicked')
