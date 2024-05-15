@@ -8,6 +8,22 @@ function init(self)
 	print("I'm a new card")
 	self.click_to_deck = true
 	self.selected = false
+	self.ylock = false
+	self.ylockval = (-1)
+end
+
+function update(self)
+	if self.ylock then
+		local pos = go.get_position()
+		if self.ylockval == -1 then
+			self.ylockval = pos.y
+		else
+			pos.y = self.ylockval
+		end
+		go.set_position(pos)
+	elseif self.ylockval ~= -1 then
+		self.ylockval = -1
+	end
 end
 
 local function reached_furthest_wiggle(self, url, property_id)
@@ -61,11 +77,14 @@ function on_message(self, message_id, message, sender)
 			go.animate('.', "position.y", go.PLAYBACK_ONCE_FORWARD, (pos.y - SELECTED_OFFSET), go.EASING_LINEAR, 0.05)
 		end
 		print("Card action unbound")
+	elseif message_id == hash('cursor_over') then
+		--self.ylock = true
 	elseif message_id == hash("drag_end") then
 		if self.click_to_deck then
 			msg.post('/deck', 'clicked')
 			self.click_to_deck = false
 		end
+		--self.ylock = false
 	end
 end
 

@@ -118,7 +118,7 @@ function on_message(self, message_id, message, sender)
 		pprint(selected)
 		-- announce these to the play_zone
 		for i, card in next, selected do
-			msg.post('/hand_zone', "card_announce", {url = card.url})
+			msg.post('/play_zone', "card_announce", {url = card.url})
 		end
 		-- shuffle cards together
 		animate_remove(self, selected)
