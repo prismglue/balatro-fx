@@ -50,6 +50,7 @@ local function animate_remove(self, removed)
 	local x_start = go.get_position().x - (self.zone_size.x/2)
 	local x_end = go.get_position().x + (self.zone_size.x/2)
 	local removed_urls = {}
+	local hand_size = self.hand_size - self.card_count
 	for i, remove in next, removed do
 		self.card_count = self.card_count - 1
 		local space_per_card = get_card_space(self, x_end-x_start)
@@ -61,7 +62,7 @@ local function animate_remove(self, removed)
 				local delay = CARD_LEAVE_INTERVAL*(i-1)
 				-- card's current position is irrelevant, tell it where it's going
 				local emptyslots = self.hand_size-self.card_count
-				local x = (space_per_card * reali) + self.half_card + (emptyslots*(space_per_card/2))
+				local x = (space_per_card * reali) + self.half_card + x_start + (emptyslots*(space_per_card/2))
 				local orig = go.get_position(card.url).x
 				-- x is offset by card space for every missing card
 				reali = reali + 1
@@ -88,17 +89,19 @@ function on_message(self, message_id, message, sender)
 
 		local total_bounds = 0 -- this shrinks... relative to hand size... i think i'm going to call variable sizes a 'stretch goal' (i.e. i'm too lazy)
 		local pos = go.get_position()
-		local new_card_pos = vmath.vector3((space_per_card * self.card_count) + self.half_card, pos.y, pos.z)
+		local new_card_pos = vmath.vector3((space_per_card * self.card_count) + self.half_card + x_start, pos.y, pos.z)
 		
 		print("Bound start: " .. x_start .. " / " .. x_end .. " total: " .. total_cards .. " space per card " .. space_per_card .. " location: " .. new_card_pos)
 		self.card_count = self.card_count + 1
 		self.cards[self.card_count] = { url = message.url }
-		pprint(self.cards)
-		msg.post(sender, "zone_offer", { url = message.url, target = new_card_pos })
+		--pprint(self.cards)
+		print(go.get_id())
+		print("Offering to " .. sender)
+		msg.post(sender, "zone_offer", { url = message.url, target = new_card_pos, idx = mesage.i })
 	elseif message_id == hash("zone_offer") then
-		print("ZONE OFFER")
-		pprint(message)
-		msg.post(message.url, 'fling', { target = message.target })
+		--print("ZONE OFFER")
+		--pprint(message)
+		msg.post(message.url, 'play', {target = message.target, delay = CARD_LEAVE_INTERVAL*message.idx})
 	elseif message_id == hash('card_select') then
 		for i, card in next, self.cards do
 			if card.url == sender then
@@ -120,7 +123,7 @@ function on_message(self, message_id, message, sender)
 		pprint(selected)
 		-- announce these to the play_zone
 		for i, card in next, selected do
-			msg.post('/play_zone', "card_announce", {url = card.url})
+			msg.post('/play_zone', "card_announce", {url = card.url, idx = i})
 		end
 		-- shuffle cards together
 		animate_remove(self, selected)

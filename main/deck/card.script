@@ -47,13 +47,17 @@ function on_message(self, message_id, message, sender)
 		-- this is relevant to zones that know someone is dragging a card
 	elseif message_id == hash('dealt') then
 		self.click_to_deck = false
-	elseif message_id == hash('fling') then
-		print("fling to destination: ")
-		pprint(message)
+	elseif message_id == hash('fling') or message_id == hash('play') then
+		--print("fling to destination: ")
+		--pprint(message)
 		if message.delay == nil then
 			message.delay = 0
 		end
-		go.animate('.', "position", go.PLAYBACK_ONCE_FORWARD, message.target, go.EASING_LINEAR, 0.1, message.delay, did_animate_deck_top)
+		if message_id == hash('play') then
+			go.animate('.', "position", go.PLAYBACK_ONCE_FORWARD, message.target, go.EASING_LINEAR, 0.1, message.delay)
+		else
+			go.animate('.', "position", go.PLAYBACK_ONCE_FORWARD, message.target, go.EASING_LINEAR, 0.1, message.delay, did_animate_deck_top)
+		end
 	elseif message_id == hash("clicked") then
 		print("Card: " .. go.get_id() .. " clicked")
 		if self.click_to_deck then
