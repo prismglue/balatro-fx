@@ -1,4 +1,4 @@
-local CARD_LEAVE_INTERVAL = 0.907
+local CARD_LEAVE_INTERVAL = 0.07
 
 function init(self)
 	-- get the total size of the zone
@@ -42,16 +42,12 @@ local function get_card_space(self, size)
 	return size / total_cards, total_cards
 end
 
--- probably needs refactoring for animate_join or an aggregate animate_change... ah well, get this working first
 local function animate_remove(self, removed)
-	print("Removing cards...")
-	local removed_urls = {}
-	for i, remove in next, removed do
-	end
 	-- it's actually relatively simple
 	-- for each card, move all the cards towards the empty spot in a leftofremove/rightofremove fashion
 	local x_start = go.get_position().x - (self.zone_size.x/2)
 	local x_end = go.get_position().x + (self.zone_size.x/2)
+	local removed_urls = {}
 	for i, remove in next, removed do
 		self.card_count = self.card_count - 1
 		local space_per_card = get_card_space(self, x_end-x_start)
@@ -74,7 +70,6 @@ local function animate_remove(self, removed)
 			end
 		end
 		print("removed " .. table.remove(self.cards, remove_index).url)
-		msg.post(remove.url, 'fling', { target = self.discard_pos, delay = CARD_LEAVE_INTERVAL*i-1})
 	end
 end
 
@@ -98,6 +93,10 @@ function on_message(self, message_id, message, sender)
 		self.cards[self.card_count] = { url = message.url }
 		pprint(self.cards)
 		msg.post(sender, "zone_offer", { url = message.url, target = new_card_pos })
+	elseif message_id == hash("zone_offer") then
+		print("ZONE OFFER")
+		pprint(message)
+		msg.post(message.url, 'fling', { target = message.target })
 	elseif message_id == hash('card_select') then
 		for i, card in next, self.cards do
 			if card.url == sender then
@@ -109,6 +108,9 @@ function on_message(self, message_id, message, sender)
 		pprint(selected)
 		-- throw these cards away index by index with a delay offset by the iteration... anyway
 		self.discard_pos = go.get_position('/discard_pile')
+		for i, remove in next, selected do
+			msg.post(remove.url, 'fling', { target = self.discard_pos, delay = CARD_LEAVE_INTERVAL*(i-1)})
+		end
 		-- shuffle cards together
 		animate_remove(self, selected)
 	elseif message_id == hash('play') then
@@ -116,7 +118,7 @@ function on_message(self, message_id, message, sender)
 		pprint(selected)
 		-- announce these to the play_zone
 		for i, card in next, selected do
-			msg.post('/hand_zone', "zone_offer", {url = card.url})
+			msg.post('/hand_zone', "card_announce", {url = card.url})
 		end
 		-- shuffle cards together
 		animate_remove(self, selected)
