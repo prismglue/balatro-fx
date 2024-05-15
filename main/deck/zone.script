@@ -50,7 +50,6 @@ local function animate_remove(self, removed)
 	local x_start = go.get_position().x - (self.zone_size.x/2)
 	local x_end = go.get_position().x + (self.zone_size.x/2)
 	local removed_urls = {}
-	local hand_size = self.hand_size - self.card_count
 	for i, remove in next, removed do
 		self.card_count = self.card_count - 1
 		local space_per_card = get_card_space(self, x_end-x_start)
@@ -76,6 +75,10 @@ local function animate_remove(self, removed)
 	end
 end
 
+local function discard_cards(self)
+	print("nothing")
+end
+
 function on_message(self, message_id, message, sender)
 	-- I need to know when I'm about to receive a card, and what suit it is, so I can pick a slot for it and reply
 	if message_id == hash("card_announce") then
@@ -89,7 +92,11 @@ function on_message(self, message_id, message, sender)
 
 		local total_bounds = 0 -- this shrinks... relative to hand size... i think i'm going to call variable sizes a 'stretch goal' (i.e. i'm too lazy)
 		local pos = go.get_position()
+		local card_count = self.card_count
 		local new_card_pos = vmath.vector3((space_per_card * self.card_count) + self.half_card + x_start, pos.y, pos.z)
+		if message.care_about_empty_slots ~= nil then
+			--new_card_pos.x = new_card_pos.x + (self.hand_size-self.card_count)/2*(space_per_card/2)
+		end
 		
 		print("Bound start: " .. x_start .. " / " .. x_end .. " total: " .. total_cards .. " space per card " .. space_per_card .. " location: " .. new_card_pos)
 		self.card_count = self.card_count + 1
@@ -97,7 +104,7 @@ function on_message(self, message_id, message, sender)
 		--pprint(self.cards)
 		print(go.get_id())
 		print("Offering to " .. sender)
-		msg.post(sender, "zone_offer", { url = message.url, target = new_card_pos, idx = mesage.i })
+		msg.post(sender, "zone_offer", { url = message.url, target = new_card_pos, idx = message.idx })
 	elseif message_id == hash("zone_offer") then
 		--print("ZONE OFFER")
 		--pprint(message)
@@ -123,7 +130,7 @@ function on_message(self, message_id, message, sender)
 		pprint(selected)
 		-- announce these to the play_zone
 		for i, card in next, selected do
-			msg.post('/play_zone', "card_announce", {url = card.url, idx = i})
+			msg.post('/play_zone', "card_announce", {url = card.url, idx = i-1, care_about_empty_slots = true})
 		end
 		-- shuffle cards together
 		animate_remove(self, selected)

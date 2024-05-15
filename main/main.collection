@@ -886,7 +886,7 @@ embedded_instances {
   "  }\n"
   "  properties {\n"
   "    id: \"hand_size\"\n"
-  "    value: \"5.0\"\n"
+  "    value: \"4.5\"\n"
   "    type: PROPERTY_TYPE_NUMBER\n"
   "  }\n"
   "  property_decls {\n"
