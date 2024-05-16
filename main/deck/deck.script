@@ -23,7 +23,6 @@ local function on_deck_anim_done(self)
 end
 
 -- join looks identical to leave, as each card joins, it grows the table
-
 function on_message(self, message_id, message, sender)
 	--print(message_id)
 	if message_id == hash("clicked") then
@@ -43,8 +42,13 @@ function on_message(self, message_id, message, sender)
 		msg.post('/hand_zone', 'card_announce', { url = new_card_id } ) -- wait for zone_offer in response
 	elseif message_id == hash("reset") then
 		print("resetting deck")
-		self.card_dealt = 0
+		if message.count ~= nil then
+			self.card_dealt = self.card_dealt - message.count
+		else
+			self.card_dealt = 0
+		end
 		msg.post(msg.url(nil, self.next_card, 'collider'), 'enable')
+		msg.post('#collider', 'disable') -- don't let users deal cards manually anymore
 	elseif message_id == hash("zone_offer") then
 		message.target.z = self.card_dealt
 		pprint(message)

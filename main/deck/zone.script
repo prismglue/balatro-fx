@@ -44,6 +44,15 @@ local function get_card_space(self, size)
 	return size / total_cards, total_cards
 end
 
+local function get_card_x(self, card_idx)
+	local x_start = go.get_position().x - (self.zone_size.x/2)
+	--local x_end = go.get_position().x + (self.zone_size.x/2)
+	local space_per_card = get_card_space(self, self.zone_size.x)
+
+	--local card_slot_offset = (space_per_card * self.card_count)
+	return (space_per_card * card_idx) + x_start + (space_per_card/2)
+end
+
 local function animate_remove(self, removed)
 	-- it's actually relatively simple
 	-- for each card, move all the cards towards the empty spot in a leftofremove/rightofremove fashion
@@ -73,13 +82,6 @@ local function animate_remove(self, removed)
 		end
 		print("removed " .. table.remove(self.cards, remove_index).url)
 	end
-	if self.card_count == 0 then
-		-- unlock deck
-		print("unlocking deck")
-		msg.post('/deck', 'reset')
-	else
-		print("wont unlock deck, too many cards: " .. self.card_count)
-	end
 end
 
 local function discard_cards(self)
@@ -93,27 +95,26 @@ function on_message(self, message_id, message, sender)
 		-- 14 is ace, 13 king, 12 queen, 11 jack, then regular numberwang
 		--message.value 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2
 		--message.suit  0 (spade), 1 (heart), 2 (diamond), 3 (club)
-		local x_start = go.get_position().x - (self.zone_size.x/2)
-		local x_end = go.get_position().x + (self.zone_size.x/2)
-		local space_per_card, total_cards = get_card_space(self, (x_end-x_start))
-
-		local total_bounds = 0 -- this shrinks... relative to hand size... i think i'm going to call variable sizes a 'stretch goal' (i.e. i'm too lazy)
-		local pos = go.get_position()
-		local card_slot_offset = (space_per_card * self.card_count)
-		local xpos = (space_per_card * self.card_count) + x_start + (space_per_card/2)-- + self.half_card
-		if message.care_about_empty_slots ~= nil then
-			print()
-			--xpos = xpos
-			print(xpos + (self.hand_size-self.card_count)/2*(space_per_card/2))
-		end
-		local new_card_pos = vmath.vector3(xpos, pos.y, pos.z)
 		
-		print("Bound start: " .. x_start .. " / " .. x_end .. " total: " .. total_cards .. " space per card " .. space_per_card .. " location: " .. xpos .. " slot: " .. card_slot_offset)
+		local pos = go.get_position()
+		local xpos = get_card_x(self, self.card_count)
+		local new_card_pos = vmath.vector3(xpos, pos.y, pos.z)
+
+		-- animate cards shoving into the deck by checking all cards are in the right position. if not, give them a nudge to where they'll be now
+		if message.animate == true then
+			for i, card in next, self.cards do
+				local cardpos = go.get_position(card.url)
+				local x2 = get_card_x(self, i-1)
+				print(cardpos)
+				if x2 ~= cardpos.x then
+					print("unaligned: " .. x2 .. " vs " .. cardpos.x)
+				end
+			end
+		end
+		
+		--print("Offering to sender " .. sender .. " from " .. x_start .. " / " .. x_end .. " total: " .. total_cards .. " space per card " .. space_per_card .. " location: " .. xpos .. " slot: " .. card_slot_offset)
 		self.card_count = self.card_count + 1
 		self.cards[self.card_count] = { url = message.url }
-		--pprint(self.cards)
-		print(go.get_id())
-		print("Offering to " .. sender)
 		msg.post(sender, "zone_offer", { url = message.url, target = new_card_pos, idx = message.idx })
 	elseif message_id == hash("zone_offer") then
 		--print("ZONE OFFER")
@@ -128,6 +129,7 @@ function on_message(self, message_id, message, sender)
 	elseif message_id == hash('discard') then
 		local selected, selected_count = get_selected_cards(self)
 		pprint(selected)
+		print(selected_count)
 		-- throw these cards away index by index with a delay offset by the iteration... anyway
 		self.discard_pos = go.get_position('/discard_pile')
 		for i, remove in next, selected do
@@ -135,6 +137,10 @@ function on_message(self, message_id, message, sender)
 		end
 		-- shuffle cards together
 		animate_remove(self, selected)
+		-- draw x cards
+		--local draw = self.hand_size - self.card_count
+		msg.post('/deck', 'reset', {count=selected_count})
+		msg.post('/deck', 'clicked')
 	elseif message_id == hash('hand_size') then
 		self.hand_size = message.count
 	elseif message_id == hash('play') then
@@ -144,9 +150,10 @@ function on_message(self, message_id, message, sender)
 		msg.post('/play_zone', 'hand_size', { count = selected_count })
 		-- announce these to the play_zone
 		for i, card in next, selected do
-			msg.post('/play_zone', "card_announce", {url = card.url, idx = i-1, care_about_empty_slots = true})
+			msg.post('/play_zone', "card_announce", {url = card.url, idx = i-1})
 		end
 		-- shuffle cards together
 		animate_remove(self, selected)
+		msg.post('/deck', 'reset', {count=selected_count})
 	end
 end
