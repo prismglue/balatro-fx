@@ -7,11 +7,12 @@ function on_message(self, message_id, message, sender)
 		self.drag_offset.y = self.drag_offset.y - message.origin_y
 		pprint(message)
 	elseif message_id == hash('drag') then
-		pprint(message)
+		--pprint(message)
 		local pos = go.get_position()
 		pos.x = message.x + self.drag_offset.x
 		pos.y = message.y + self.drag_offset.y
 		go.set_position(pos)
 	elseif message_id == hash("drag_end") then
+		pprint(message)
 	end
 end

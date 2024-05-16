@@ -52,7 +52,7 @@ local function animate_remove(self, removed)
 	local removed_urls = {}
 	for i, remove in next, removed do
 		self.card_count = self.card_count - 1
-		local space_per_card = get_card_space(self, x_end-x_start)
+		local space_per_card = get_card_space(self, self.zone_size.x)
 		local reali = 0
 		removed_urls[remove.url] = remove
 		local remove_index = 0
@@ -73,6 +73,13 @@ local function animate_remove(self, removed)
 		end
 		print("removed " .. table.remove(self.cards, remove_index).url)
 	end
+	if self.card_count == 0 then
+		-- unlock deck
+		print("unlocking deck")
+		msg.post('/deck', 'reset')
+	else
+		print("wont unlock deck, too many cards: " .. self.card_count)
+	end
 end
 
 local function discard_cards(self)
@@ -92,13 +99,16 @@ function on_message(self, message_id, message, sender)
 
 		local total_bounds = 0 -- this shrinks... relative to hand size... i think i'm going to call variable sizes a 'stretch goal' (i.e. i'm too lazy)
 		local pos = go.get_position()
-		local card_count = self.card_count
-		local new_card_pos = vmath.vector3((space_per_card * self.card_count) + self.half_card + x_start, pos.y, pos.z)
+		local card_slot_offset = (space_per_card * self.card_count)
+		local xpos = (space_per_card * self.card_count) + x_start + (space_per_card/2)-- + self.half_card
 		if message.care_about_empty_slots ~= nil then
-			--new_card_pos.x = new_card_pos.x + (self.hand_size-self.card_count)/2*(space_per_card/2)
+			print()
+			--xpos = xpos
+			print(xpos + (self.hand_size-self.card_count)/2*(space_per_card/2))
 		end
+		local new_card_pos = vmath.vector3(xpos, pos.y, pos.z)
 		
-		print("Bound start: " .. x_start .. " / " .. x_end .. " total: " .. total_cards .. " space per card " .. space_per_card .. " location: " .. new_card_pos)
+		print("Bound start: " .. x_start .. " / " .. x_end .. " total: " .. total_cards .. " space per card " .. space_per_card .. " location: " .. xpos .. " slot: " .. card_slot_offset)
 		self.card_count = self.card_count + 1
 		self.cards[self.card_count] = { url = message.url }
 		--pprint(self.cards)
@@ -125,9 +135,13 @@ function on_message(self, message_id, message, sender)
 		end
 		-- shuffle cards together
 		animate_remove(self, selected)
+	elseif message_id == hash('hand_size') then
+		self.hand_size = message.count
 	elseif message_id == hash('play') then
 		local selected, selected_count = get_selected_cards(self)
 		pprint(selected)
+		-- tell the play zone how many cards to expect
+		msg.post('/play_zone', 'hand_size', { count = selected_count })
 		-- announce these to the play_zone
 		for i, card in next, selected do
 			msg.post('/play_zone', "card_announce", {url = card.url, idx = i-1, care_about_empty_slots = true})
@@ -136,38 +150,3 @@ function on_message(self, message_id, message, sender)
 		animate_remove(self, selected)
 	end
 end
-
--- mouseover is what triggers shuffles - if you mouse over another card while dragging a primary card, trigger the shift right
--- mouseover doesn't work, i move some of the items too high
--- i have two options
--- create a collisionobject for each card slot
--- monitor drag events for card slot overlap
--- seems like drag events would be cheaper, we're already getting them every frame
-
--- drag event timestamp: https://youtu.be/bFOfsbmB2O4?t=1275
-
-
--- in balatro, cards get spaced based on the expected hand size. so when you discard cards, they don't change their relative distance...
--- unless you have been over-dealt, then when your card leaves, the overdealt hand shrinks
-
--- the tilt of the card is relative to it's position - 5 in a 9 card hand faces straight up
-
--- i guess the final trouble is the 'float around the centre' behaviour. cards float towards the centre
--- ok so you deal 4 / 8 cards, you only have 4 left. they push each other together, hmm...
-
--- you could shrink the total available board area around the centre point?
--- that way, everything is still positioned relative to the centre, but the maximum bounds are redefined
--- like a hand-sized-hole that grows based on the total number of cards. then you divide the consumed space across the card sized hole.
-
--- cards are 'served' in order they are drawn but they place themselves in rank/suit order
--- so 5 can be dealt then 2, 5 will go left, 2 will go right
--- knowing all card positions in advance would help such an animation since cards know their final position
--- i don't think this happens though, i think it acts like the single card join animation
--- s the card lands in it's spot, it shoves the other cards left and right
-
--- https://www.youtube.com/watch?v=bFOfsbmB2O4 this video has a fat hand and a few hours of gameplay to scrub through for details
-
--- ah we need a slot system
--- slots should exist based on the number of dealt cards
--- how do you drag between each slot? triggers?
-
