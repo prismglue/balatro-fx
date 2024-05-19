@@ -1,0 +1,21 @@
+name: 'Build with defold-builder-simple and publish to GitHub Pages'
+
+on:
+  workflow_dispatch:
+
+env:
+  DEFOLD_VERSION: 1.8.0
+  PROJECT_TITLE: balatro-fx
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Try defold-builder-simple'
+        uses: prismglue/defold-builder-simple@0.0.1-alpha1
+
+      - name: 'See what happened'
+        run: |
+          ls -l build/default/
+          ls -l build/default/${{env.PROJECT_TITLE}}
