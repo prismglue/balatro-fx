@@ -15,8 +15,8 @@ jobs:
       - name: 'Try defold-builder-simple'
         uses: prismglue/defold-builder-simple@main
         with:
-         PROJECT_TITLE: ${{ env.PROJECT_TITLE }}
-         DEFOLD_VERSION: ${{ env.DEFOLD_VERSION }}
+         project_title: ${{ env.PROJECT_TITLE }}
+         defold_version: ${{ env.DEFOLD_VERSION }}
 
       - name: 'See what happened'
         run: |
