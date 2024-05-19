@@ -41,4 +41,10 @@
 *.script linguist-language=Lua
 *.gui_script linguist-language=Lua
 
-* binary
+# Defold web binaries
+*.wasm binary
+*.arcd binary
+*.arci binary
+*.dmanifest binary
+*.json binary
+*.der binary
