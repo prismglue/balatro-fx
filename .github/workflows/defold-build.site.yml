@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Try defold-builder-simple'
-        uses: prismglue/defold-builder-simple@0.0.1-alpha6
+        uses: prismglue/defold-builder-simple@0.0.1-alpha7
         with:
          PROJECT_TITLE: ${{ env.PROJECT_TITLE }}
          DEFOLD_VERSION: ${{ env.DEFOLD_VERSION }}
