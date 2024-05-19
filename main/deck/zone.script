@@ -25,6 +25,10 @@ end
 function fixed_update(self, dt)
 end
 
+local function click_deck()
+	msg.post('/deck', 'clicked')
+end
+
 local function get_selected_cards(self)
 	local selectcount = 0
 	local selected = {}
@@ -169,7 +173,7 @@ function on_message(self, message_id, message, sender)
 		-- draw x cards
 		--local draw = self.hand_size - self.card_count
 		msg.post('/deck', 'reset', {count=selected_count})
-		msg.post('/deck', 'clicked')
+		timer.delay(CARD_LEAVE_INTERVAL*(selected_count+1), false, click_deck)
 	elseif message_id == hash('hand_size') then
 		self.hand_size = message.count
 	elseif message_id == hash('play') then
