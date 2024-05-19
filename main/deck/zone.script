@@ -193,6 +193,7 @@ function on_message(self, message_id, message, sender)
 		local PLAY_ANIMATION_DURATION = 0.3
 		for i, card in next, self.cards do
 			go.animate(card.url, 'scale', go.PLAYBACK_ONCE_PINGPONG, vmath.vector3(1.25, 1.25, 1.25), go.EASING_LINEAR, PLAY_ANIMATION_DURATION, (i-1)*PLAY_ANIMATION_DURATION)
+			go.animate(card.url, 'euler', go.PLAYBACK_ONCE_PINGPONG, vmath.vector3(math.random(-3, 3), math.random(-3, 3), math.random(-3, 3)), go.EASING_INBOUNCE, PLAY_ANIMATION_DURATION, (i-1)*PLAY_ANIMATION_DURATION)
 		end
 		timer.delay(self.card_count*PLAY_ANIMATION_DURATION, false, play_discard_reset)
 	end
