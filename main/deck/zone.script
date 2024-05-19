@@ -16,6 +16,7 @@ function init(self)
 	self.card_count = 0 -- lua doesn't know how many items are in a table and doesn't offer a builtin for counting
 	-- you can be overdealt and your hand can be larger than hand_size, so it's math.max between them
 	self.cards = {}
+	self.select_all = false
 end
 
 function update(self, dt)
@@ -31,7 +32,7 @@ local function get_selected_cards(self)
 	for i, card in next, self.cards do
 		local pos = go.get_position(card.url)
 		-- don't bother with 'card_select' messages, just find out if it's away from the baseline, heh
-		if card.selected or mypos.y ~= pos.y then
+		if card.selected or mypos.y ~= pos.y or self.select_all then
 			selectcount = selectcount + 1
 			selected[selectcount] = card
 		end
@@ -52,6 +53,15 @@ local function get_card_x(self, card_idx)
 	--local card_slot_offset = (space_per_card * self.card_count)
 	return (space_per_card * card_idx) + x_start + (space_per_card/2)
 end
+
+function table.shallow_copy(t)
+	local t2 = {}
+	for k,v in pairs(t) do
+		t2[k] = v
+	end
+	return t2
+end
+
 
 local function animate_remove(self, removed)
 	-- it's actually relatively simple
@@ -88,6 +98,23 @@ local function discard_cards(self)
 	print("nothing")
 end
 
+local function play_discard_reset(self)
+	print("PLAY DISCARD RESET")
+	--animate_remove(self, table.shallow_copy(self.cards))
+	self.select_all = true
+	local selected, selected_count = get_selected_cards(self)
+	pprint(selected)
+	print(selected_count)
+	-- throw these cards away index by index with a delay offset by the iteration... anyway
+	self.discard_pos = go.get_position('/discard_pile')
+	for i, remove in next, selected do
+		msg.post(remove.url, 'fling', { target = self.discard_pos, delay = CARD_LEAVE_INTERVAL*(i-1)})
+	end
+	-- shuffle cards together
+	animate_remove(self, selected)
+	msg.post('/deck', 'clicked')
+end
+
 function on_message(self, message_id, message, sender)
 	-- I need to know when I'm about to receive a card, and what suit it is, so I can pick a slot for it and reply
 	if message_id == hash("card_announce") then
@@ -100,21 +127,23 @@ function on_message(self, message_id, message, sender)
 		local xpos = get_card_x(self, self.card_count)
 		local new_card_pos = vmath.vector3(xpos, pos.y, pos.z)
 
-		-- animate cards shoving into the deck by checking all cards are in the right position. if not, give them a nudge to where they'll be now
-		if message.animate == true then
-			for i, card in next, self.cards do
-				local cardpos = go.get_position(card.url)
-				local x2 = get_card_x(self, i-1)
-				print(cardpos)
-				if x2 ~= cardpos.x then
-					print("unaligned: " .. x2 .. " vs " .. cardpos.x)
-				end
+		-- animate cards shoving into the deck by checking all cards are in the right position. if not, give them a nudge to where they'll be.
+		for i, card in next, self.cards do
+			local cardpos = go.get_position(card.url)
+			local x2 = get_card_x(self, i-1)
+			print(cardpos)
+			if x2 ~= cardpos.x and message.hand ~= card.hand then
+				print("unaligned: " .. x2 .. " vs " .. cardpos.x)
+				cardpos.x = x2
+				cardpos.z = i
+				go.animate(card.url, 'position', go.PLAYBACK_ONCE_FORWARD, cardpos, go.EASING_LINEAR, 0.1)
 			end
 		end
 		
 		--print("Offering to sender " .. sender .. " from " .. x_start .. " / " .. x_end .. " total: " .. total_cards .. " space per card " .. space_per_card .. " location: " .. xpos .. " slot: " .. card_slot_offset)
 		self.card_count = self.card_count + 1
-		self.cards[self.card_count] = { url = message.url }
+		pprint(message)
+		self.cards[self.card_count] = message -- { url = message.url, hand = message.hand }
 		msg.post(sender, "zone_offer", { url = message.url, target = new_card_pos, idx = message.idx })
 	elseif message_id == hash("zone_offer") then
 		--print("ZONE OFFER")
@@ -155,5 +184,12 @@ function on_message(self, message_id, message, sender)
 		-- shuffle cards together
 		animate_remove(self, selected)
 		msg.post('/deck', 'reset', {count=selected_count})
+	elseif message_id == hash('play_complete') then
+		-- animate the cards doing the wiggle and then shove them away
+		local PLAY_ANIMATION_DURATION = 0.3
+		for i, card in next, self.cards do
+			go.animate(card.url, 'scale', go.PLAYBACK_ONCE_PINGPONG, vmath.vector3(1.25, 1.25, 1.25), go.EASING_LINEAR, PLAY_ANIMATION_DURATION, (i-1)*PLAY_ANIMATION_DURATION)
+		end
+		timer.delay(self.card_count*PLAY_ANIMATION_DURATION, false, play_discard_reset)
 	end
 end

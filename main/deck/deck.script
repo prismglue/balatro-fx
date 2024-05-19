@@ -6,16 +6,22 @@ function init(self)
 	self.card_pos1 = go.get_position("/card_img1")
 	self.next_card = factory.create('#factory', go.get_position('#collider'))
 	self.card_dealt = 0
+	self.hands_dealt = 0
 end
 
 function update(self, dt)
+end
+
+local function disable_self(self)
+	self.hands_dealt = self.hands_dealt + 1
+	msg.post(msg.url(nil, self.next_card, 'collider'), 'disable')
 end
 
 local function on_deck_anim_done(self)
 	self.next_card = factory.create('#factory', go.get_position('#collider'))
 	if self.card_dealt >= MAX_CARD_DEAL then
 		-- disable next card collider
-		msg.post(msg.url(nil, self.next_card, 'collider'), 'disable')
+		disable_self(self)
 		return
 	else
 		msg.post('.', 'clicked') -- causes the drop or click event to deal the rest of the cards
@@ -29,6 +35,7 @@ function on_message(self, message_id, message, sender)
 		if self.card_dealt >= MAX_CARD_DEAL then
 			print("Can't deal more than "..MAX_CARD_DEAL.." cards")
 			-- disable next card collider too
+			disable_self(self)
 			return
 		end
 		msg.post('#collider', 'disable') -- don't let users deal cards manually anymore
@@ -39,7 +46,7 @@ function on_message(self, message_id, message, sender)
 		-- reset previous animation states
 		go.set_position(self.card_pos, "/card_img")
 		go.set_position(self.card_pos1, "/card_img1")
-		msg.post('/hand_zone', 'card_announce', { url = new_card_id } ) -- wait for zone_offer in response
+		msg.post('/hand_zone', 'card_announce', { url = new_card_id, hand = self.hands_dealt } ) -- wait for zone_offer in response
 	elseif message_id == hash("reset") then
 		print("resetting deck")
 		if message.count ~= nil then
