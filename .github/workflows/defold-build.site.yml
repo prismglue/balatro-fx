@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Try defold-builder-simple'
-        uses: prismglue/defold-builder-simple@0.0.1-alpha1
+        uses: prismglue/defold-builder-simple@0.0.1-alpha2
 
       - name: 'See what happened'
         run: |
