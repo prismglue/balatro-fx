@@ -29,9 +29,13 @@ jobs:
         with:
           path: ${{steps.defold-build.outputs.path}}
 
-  deploy:
+  deploy: # Separate jobs are recommended to avoid leaking permissions to riskier jobs (such as defold-builder-simple)
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+
     steps:
       - name: 'deploy to github pages'
         uses: actions/deploy-pages@v4
