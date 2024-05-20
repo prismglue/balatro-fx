@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
   push:
     tags:
-      1.**
-      v1.**
+      - 1.**
+        v1.**
 
 env:
   DEFOLD_VERSION: 1.8.0
