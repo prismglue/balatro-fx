@@ -6,4 +6,6 @@ I don't plan on doing any shaders. This is just a fun way for me to learn a game
 
 Try it at https://prismglue.github.io/balatro-fx/
 
+See other entries at https://forum.defold.com/t/community-challenge-recreate-balatro-card-effects-in-defold/76854/
+
 (Builds are published on tag, check out .github/workflows/defold-build-site.yml for more info)
