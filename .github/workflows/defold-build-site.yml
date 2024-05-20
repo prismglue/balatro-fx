@@ -5,7 +5,7 @@ on:
   push:
     tags:
       - 1.**
-        v1.**
+      - v1.**
 
 env:
   DEFOLD_VERSION: 1.8.0
