@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: 'invoke defold-builder-simple'
         id: 'defold-build'
-        uses: prismglue/defold-builder-simple@1.1.0
+        uses: prismglue/defold-builder-simple@main
         with:
           project_title: ${{ env.PROJECT_TITLE }}
           defold_version: ${{ env.DEFOLD_VERSION }}
