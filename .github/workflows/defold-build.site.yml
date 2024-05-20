@@ -1,4 +1,4 @@
-name: 'Build with defold-builder-simple and publish to GitHub Pages'
+name: 'Build HTML5 and publish to GitHub Pages'
 
 on:
   workflow_dispatch:
@@ -13,7 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'invoke defold-builder-simple'
-        uses: prismglue/defold-builder-simple@1.0.0
+        id: 'defold-build'
+        uses: prismglue/defold-builder-simple@1.1.0
         with:
           project_title: ${{ env.PROJECT_TITLE }}
           defold_version: ${{ env.DEFOLD_VERSION }}
@@ -22,4 +23,4 @@ jobs:
       - name: 'publish artefact to github pages'
         uses: actions/upload-pages-artifact@v3.0.1
         with:
-          path: 'build/default/${{env.PROJECT_TITLE}}/'
+          path: ${{steps.defold-build.outputs.path}}
