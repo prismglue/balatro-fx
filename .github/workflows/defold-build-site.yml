@@ -2,6 +2,9 @@ name: 'Build HTML5 and publish to GitHub Pages'
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      1.**
 
 env:
   DEFOLD_VERSION: 1.8.0
