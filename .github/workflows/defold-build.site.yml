@@ -20,6 +20,6 @@ jobs:
           archive: false
 
       - name: 'publish artefact to github pages'
-        uses: actions/upload-pages-artifact@3.0.1
+        uses: actions/upload-pages-artifact@v3.0.1
         with:
           path: 'build/default/${{env.PROJECT_TITLE}}/'
