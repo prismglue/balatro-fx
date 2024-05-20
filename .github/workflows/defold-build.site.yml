@@ -12,13 +12,14 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - name: 'Try defold-builder-simple'
-        uses: prismglue/defold-builder-simple@main
+      - name: 'invoke defold-builder-simple'
+        uses: prismglue/defold-builder-simple@1.0.0
         with:
-         project_title: ${{ env.PROJECT_TITLE }}
-         defold_version: ${{ env.DEFOLD_VERSION }}
+          project_title: ${{ env.PROJECT_TITLE }}
+          defold_version: ${{ env.DEFOLD_VERSION }}
+          archive: false
 
-      - name: 'See what happened'
-        run: |
-          ls -l build/default/
-          ls -l build/default/${{env.PROJECT_TITLE}}
+      - name: 'publish artefact to github pages'
+        uses: actions/upload-pages-artifact@3.0.1
+        with:
+          path: 'build/default/${{env.PROJECT_TITLE}}/'
