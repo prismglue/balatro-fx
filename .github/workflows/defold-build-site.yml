@@ -31,6 +31,7 @@ jobs:
   deploy: # Separate jobs are recommended to avoid leaking permissions to riskier jobs (such as defold-builder-simple)
     needs: build
     runs-on: ubuntu-latest
+    environment: github-pages
     permissions:
       pages: write
       id-token: write
