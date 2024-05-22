@@ -18,12 +18,11 @@ jobs:
     steps:
       - name: 'invoke defold-builder-simple'
         id: 'defold-build'
-        uses: prismglue/defold-builder-simple@main
+        uses: prismglue/defold-builder-simple@v1.2.0
         with:
           project_title: ${{ env.PROJECT_TITLE }}
           defold_version: ${{ env.DEFOLD_VERSION }}
           archive: false
-
       - name: 'upload to github pages'
         uses: actions/upload-pages-artifact@v3.0.1
         with:
@@ -35,7 +34,6 @@ jobs:
     permissions:
       pages: write
       id-token: write
-
     steps:
       - name: 'deploy to github pages'
         uses: actions/deploy-pages@v4

@@ -103,6 +103,8 @@ function on_message(self, message_id, message, sender)
 			self.click_to_deck = false
 		end
 		--self.ylock = false
+	elseif message_id == hash('deck') then
+		self.click_to_deck = true
 	end
 end
 

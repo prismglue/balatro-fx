@@ -1,5 +1,10 @@
 local MAX_CARD_DEAL = 8
+go.property('deck_size', 48)
 local CARD_ICONS = {'club_ace_small', 'diamond_ace_small', 'spade_ace_small', 'heart_ace_small'}
+
+local function refresh_deck_count(self)
+	label.set_text('#label', self.deck_count .. ' / ' .. self.deck_size)
+end
 
 function init(self)
 	self.deck_pos = go.get_position(".")
@@ -8,6 +13,8 @@ function init(self)
 	self.next_card = factory.create('#factory', go.get_position('#collider'))
 	self.card_dealt = 0
 	self.hands_dealt = 0
+	self.deck_count = self.deck_size
+	refresh_deck_count(self)
 end
 
 function update(self, dt)
@@ -42,14 +49,27 @@ function on_message(self, message_id, message, sender)
 			disable_self(self)
 			return
 		end
+		if self.deck_count <= 0 then
+			print("Can't deal more than "..self.deck_size.." cards")
+			-- wiggle the topmost card
+			local vecz = math.random(2,3)
+			if math.random(0, 1) == 0 then
+				vecz = vecz * -1
+			end
+			go.animate(self.next_card, 'euler', go.PLAYBACK_ONCE_PINGPONG, vmath.vector3(0, 0, vecz), go.EASING_LINEAR, 0.175)
+			msg.post(self.next_card, 'deck') -- force next click to pass through again
+			return
+		end
 		msg.post('#collider', 'disable') -- don't let users deal cards manually anymore
 		-- this should trigger a 'hand remaining' deal instead of a 'single card deal' to match Balatro's behaviour
 		local new_card_id = self.next_card
 		self.next_card = nil
 		self.card_dealt = self.card_dealt + 1
+		self.deck_count = self.deck_count - 1
 		-- reset previous animation states
 		go.set_position(self.card_pos, "/card_img")
 		go.set_position(self.card_pos1, "/card_img1")
+		refresh_deck_count(self)
 		msg.post('/hand_zone', 'card_announce', { url = new_card_id, hand = self.hands_dealt } ) -- wait for zone_offer in response
 	elseif message_id == hash("reset") then
 		print("resetting deck")
