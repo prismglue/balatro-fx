@@ -2,6 +2,10 @@ go.property("hand_size", 8) -- make cards 'larger' so they space out better
 
 local CARD_LEAVE_INTERVAL = 0.07
 
+local function update_card_count(self)
+	label.set_text('#label', self.card_count .. " / " .. self.hand_size)
+end
+
 function init(self)
 	-- get the total size of the zone
 	self.zone_size = go.get('#sprite', 'size')
@@ -17,6 +21,7 @@ function init(self)
 	-- you can be overdealt and your hand can be larger than hand_size, so it's math.max between them
 	self.cards = {}
 	self.select_all = false
+	update_card_count(self)
 end
 
 function update(self, dt)
@@ -75,6 +80,7 @@ local function animate_remove(self, removed)
 	local removed_urls = {}
 	for i, remove in next, removed do
 		self.card_count = self.card_count - 1
+		update_card_count(self)
 		local space_per_card = get_card_space(self, self.zone_size.x)
 		local reali = 0
 		removed_urls[remove.url] = remove
@@ -153,6 +159,7 @@ function on_message(self, message_id, message, sender)
 		self.card_count = self.card_count + 1
 		pprint(message)
 		self.cards[self.card_count] = message -- { url = message.url, hand = message.hand }
+		update_card_count(self)
 		msg.post(sender, "zone_offer", { url = message.url, target = new_card_pos, idx = message.idx })
 	elseif message_id == hash("zone_offer") then
 		--print("ZONE OFFER")
