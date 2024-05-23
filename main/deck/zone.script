@@ -2,8 +2,19 @@ go.property("hand_size", 8) -- make cards 'larger' so they space out better
 
 local CARD_LEAVE_INTERVAL = 0.07
 
-local function update_card_count(self)
-	label.set_text('#label', self.card_count .. " / " .. self.hand_size)
+local function update_card_count(self, hardcount)
+	if hardcount == nil then
+		hardcount = self.card_count
+	end
+	label.set_text('#label', hardcount .. " / " .. self.hand_size)
+end
+
+local function update_remove_card_count(self)
+	self.remove_count = self.remove_count - 1
+	label.set_text('#label', (self.card_count+self.remove_count) .. " / " .. self.hand_size)
+	if self.remove_count > 0 then
+		timer.delay(CARD_LEAVE_INTERVAL, false, update_remove_card_count)
+	end
 end
 
 function init(self)
@@ -78,9 +89,10 @@ local function animate_remove(self, removed)
 	local x_start = go.get_position().x - (self.zone_size.x/2)
 	local x_end = go.get_position().x + (self.zone_size.x/2)
 	local removed_urls = {}
+	self.remove_count = 0
 	for i, remove in next, removed do
 		self.card_count = self.card_count - 1
-		update_card_count(self)
+		self.remove_count = self.remove_count + 1
 		local space_per_card = get_card_space(self, self.zone_size.x)
 		local reali = 0
 		removed_urls[remove.url] = remove
@@ -102,6 +114,7 @@ local function animate_remove(self, removed)
 		end
 		print("removed " .. table.remove(self.cards, remove_index).url)
 	end
+	update_remove_card_count(self)
 end
 
 local function discarded_cards(self)
